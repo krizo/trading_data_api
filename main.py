@@ -4,7 +4,8 @@ import sys
 from fastapi import FastAPI
 from config.db import Database
 from config.logging_config import setup_logger
-from models.models import AddBatchRequest
+from models.add_batch_model import AddBatchRequest
+from models.stats_model import StatsResponse
 
 app = FastAPI(debug=True)
 db = Database()
@@ -55,3 +56,17 @@ async def clear_db():
     """
     db.clear()
     return {"message": "Database cleared"}
+
+
+@app.get("/stats/", response_model=StatsResponse)
+async def get_stats(symbol: str, k: int):
+    """
+    Perform statistical analysis on recent trading data for a given symbol.
+
+    - **symbol**: Financial instrument identifier.
+    - **k**: An integer from 1 to 8, specifying the number of last 1e{k} data points to analyze.
+    Returns statistics including min, max, last, average, and variance.
+    """
+    stats = db.calculate_stats(symbol, k)
+
+    return stats

@@ -75,3 +75,17 @@ class Sender:
         """
         endpoint = "clear_db"
         return cls.send_request('DELETE', endpoint)
+
+    @classmethod
+    @log_execution_time
+    def get_stats(cls, symbol: str, k: int):
+        """
+        Send a GET request to retrieve statistical analysis of trading data for a specific symbol.
+
+        :param symbol: The financial instrument's identifier.
+        :param k: An integer specifying the number of last 1e{k} data points to analyze.
+        :return: The response from the API, which includes statistics (min, max, last, avg, var).
+        """
+        endpoint = "stats"
+        params = {"symbol": symbol, "k": k}
+        return cls.send_request('GET', endpoint, params=params)

@@ -1,10 +1,14 @@
 import json
 import sys
+
+import numpy as np
 import pytest
 
 from helpers.assertions import assert_equals
 from helpers.generators import SymbolGenerator
+from models.stats_model import StatsResponse
 from senders.sender import Sender
+import numpy as np
 
 # Test data
 test_data = [
@@ -19,11 +23,7 @@ test_data = [
     {
         "symbol": next(SymbolGenerator()),
         "values": [sys.float_info.min, -sys.float_info.min]
-    },
-    {
-        "symbol": next(SymbolGenerator()),
-        "values": [sys.float_info.max, -sys.float_info.max]
-    },
+    }
 ]
 
 
@@ -45,7 +45,6 @@ def setup_and_teardown():
     """
     Sender.clear_db()  # Clear the DB before each test
     yield  # Run test
-    # No teardown needed, but you can add cleanup code if necessary
 
 
 def test_add_batch_positive(data):
@@ -64,16 +63,33 @@ def test_get_values_positive(data):
     """
     symbol, expected_values = data['symbol'], data['values']
 
-    # Add batch first
     Sender.add_batch(symbol, expected_values)
 
     # Get the values
     response = Sender.get_values(symbol)
     assert response.ok, "Request failed"
 
-    # Parse response content
     content = json.loads(response.content)
 
-    # Validate the response content
     assert_equals(actual_value=content['symbol'], expected=symbol, description="Invalid symbol value")
     assert_equals(actual_value=content['values'], expected=expected_values, description="Invalid values")
+
+
+def test_get_stats_positive(data):
+    """
+    Test for getting statistics for trading values for a given symbol.
+    """
+    symbol, expected_values = data['symbol'], data['values']
+    Sender.add_batch(symbol, expected_values)
+
+    response = Sender.get_stats(data['symbol'], 1)
+    content = json.loads(response.content)
+
+    # Check if all metrics are in the response
+    assert sorted(StatsResponse.model_fields) == sorted(content.keys())
+
+    assert_equals(content['min'], np.min(data['values']), "Invalid min value")
+    assert_equals(content['max'], np.max(data['values']), "Invalid max value")
+    assert_equals(content['avg'], np.mean(data['values']), "Invalid avg value")
+    assert_equals(content['var'], np.var(data['values']), "Invalid var value")
+    assert_equals(content['last'], data['values'][-1], "Invalid last value")

@@ -15,7 +15,7 @@ def log_execution_time(func):
         result = func(*args, **kwargs)
         end_time = time.time()
         execution_time = (end_time - start_time) * 1000
-        LOG.info(f"Execution time of {args[0].__name__}.{func.__name__.upper()}: {int(execution_time)} milliseconds")
+        LOG.info(f"Execution time of {args[0].__name__}.{func.__name__.upper()}: {round(execution_time, 2)} milliseconds")
         return result
 
     return wrapper
