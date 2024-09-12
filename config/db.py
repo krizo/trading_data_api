@@ -70,6 +70,7 @@ class Database:
         """
         self.data.clear()
 
+    @log_execution_time
     def calculate_stats(self, symbol: str, k: int):
         """
         Perform statistical analysis on the recent trading data for a specified financial instrument.
@@ -88,11 +89,43 @@ class Database:
         num_points = int(10 ** k)
         values = self.get_values(symbol, num_points)
 
+        if not values:
+            raise HTTPException(status_code=404, detail="No data found for the given symbol")
+
+        # Initialize variables for calculating stats
+        min_value = float('inf')
+        max_value = float('-inf')
+        sum_value = 0
+        sum_square = 0
+        n = len(values)
+
+        # One-pass calculation for min, max, sum, and sum of squares
+        for value in values:
+            min_value = min(min_value, value)
+            max_value = max(max_value, value)
+            sum_value += value
+            sum_square += value ** 2
+
+        avg_value = sum_value / n
+        variance = (sum_square / n) - (avg_value ** 2)
+
+        # Return the computed stats
         stats = {
-            "min": np.min(values),
-            "max": np.max(values),
+            "min": min_value,
+            "max": max_value,
             "last": values[-1],
-            "avg": np.mean(values),
-            "var": np.var(values),
+            "avg": avg_value,
+            "var": variance,
         }
+
         return stats
+
+        # Numpy (k=8 -> 2 min 38 sec)
+        # stats = {
+        #     "min": np.min(values),
+        #     "max": np.max(values),
+        #     "last": values[-1],
+        #     "avg": np.mean(values),
+        #     "var": np.var(values),
+        # }
+        # return stats
