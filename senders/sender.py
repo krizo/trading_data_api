@@ -40,7 +40,6 @@ class Sender:
         return response
 
     @classmethod
-    @log_execution_time
     def add_batch(cls, symbol: str, values: list):
         """
         Send a POST request to add a batch of trading prices for a given financial instrument.

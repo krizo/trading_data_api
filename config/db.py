@@ -3,6 +3,9 @@ from typing import Dict, List
 import numpy as np
 from fastapi import HTTPException
 
+from config.consts import MAX_SYMBOLS_COUNT, MAX_TRADE_POINTS_COUNT
+from helpers.decorators import log_execution_time
+
 
 class Database:
     """
@@ -15,6 +18,9 @@ class Database:
     def __init__(self):
         self.data: Dict[str, List[float]] = {}
 
+    def __name__(self):
+        return "Server"
+
     def add_values(self, symbol: str, values: list):
         """
         Add a batch of trading prices for a given financial instrument.
@@ -22,7 +28,11 @@ class Database:
         :param values: List of floating-point numbers representing trading prices to be added.
         """
         if symbol not in self.data:
+            if len(self.data.keys()) == MAX_SYMBOLS_COUNT:
+                HTTPException(status_code=404, detail=f"Symbols limit reached ({MAX_SYMBOLS_COUNT})")
             self.data[symbol] = []
+        if len(values) > MAX_TRADE_POINTS_COUNT:
+            HTTPException(status_code=404, detail=f"Values count is abpve the limit ({MAX_TRADE_POINTS_COUNT})")
         self.data[symbol].extend(values)
 
     def get_values(self, symbol: str, num_points: int = 10):
