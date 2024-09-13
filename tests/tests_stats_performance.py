@@ -40,7 +40,6 @@ def generate_data(request, symbol) -> dict:
     values_sent = Sender.send_add_batch_data_in_chunks(symbol=symbol, generated_data=values)
 
     # # Now we properly iterate over the chunks and send them
-    # values_sent = Sender.send_add_batch_data_in_chunks(symbol, chunks)
     return {"symbol": symbol, "values": values_sent, "k": k}
 
 
@@ -55,16 +54,10 @@ def tests_stats_positive_k_value_from_1_to_max(generate_data):
 
     stats_data = stats_response.json()
 
-    # Calculate expected number of points
-    num_points = min(10 ** k_value, len(values))
-
-    # Extract last `num_points` from the values
-    truncated_values = values[-num_points:]
-
     # Validate results against the truncated values
-    assert_equals(actual_value=stats_data["min"], expected=np.min(truncated_values), description='stats["min"]')
-    assert_equals(actual_value=stats_data["max"], expected=np.max(truncated_values), description='stats["min"]')
-    assert_equals(actual_value=stats_data["last"], expected=truncated_values[-1], description='stats["last"]')
-    assert_equals(actual_value=stats_data["avg"], expected=np.mean(truncated_values), description='stats["avg"]')
-    assert_equals(actual_value=stats_data["var"], expected=np.var(truncated_values), description='stats["var"]')
-    assert_equals(actual_value=stats_data["size"], expected=len(truncated_values), description='stats["size"]')
+    assert_equals(actual_value=stats_data["min"], expected=np.min(values), description='stats["min"]')
+    assert_equals(actual_value=stats_data["max"], expected=np.max(values), description='stats["min"]')
+    assert_equals(actual_value=stats_data["last"], expected=values[-1], description='stats["last"]')
+    assert_equals(actual_value=stats_data["avg"], expected=np.mean(values), description='stats["avg"]')
+    assert_equals(actual_value=stats_data["var"], expected=np.var(values), description='stats["var"]')
+    assert_equals(actual_value=stats_data["size"], expected=len(values), description='stats["size"]')
