@@ -14,9 +14,7 @@ def symbol():
     return "AAPL"
 
 
-pytest.fixture(scope='session', autouse=True)
-
-
+@pytest.fixture(scope='session', autouse=True)
 def setup():
     """
     Clear database before all tests are ran

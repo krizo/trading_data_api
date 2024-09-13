@@ -12,7 +12,6 @@ from models.stats_response_model import StatsResponse
 from sender import Sender
 import numpy as np
 
-# Test data
 test_data = [
     {
         "symbol": next(SymbolGenerator()),
@@ -24,7 +23,7 @@ test_data = [
     },
     {
         "symbol": next(SymbolGenerator()),
-        "values": [math.sqrt(sys.float_info.max)]
+        "values": [math.sqrt(sys.float_info.max)] # Can't be more because ** 2 is used in calculating variation
     },
 ]
 

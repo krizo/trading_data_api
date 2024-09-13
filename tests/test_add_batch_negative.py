@@ -84,7 +84,6 @@ def test_add_batch_negative(data):
     response = Sender.add_batch(data.get('symbol'), data.get('values'))
     assert response.status_code == data.get('expected_status_code'), \
         f"Unexpected status code for symbol: {data.get('symbol')}. Response: {response.text}"
-    # error_msg = response_message.get('detail')[0].get('msg').lower()
     expected_msg = data.get('expected_message').lower()
     assert_error_message(expected_msg=expected_msg, response=response)
 
