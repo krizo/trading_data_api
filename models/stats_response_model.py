@@ -7,3 +7,4 @@ class StatsResponse(BaseModel):
     last: float
     avg: float
     var: float
+    size: int

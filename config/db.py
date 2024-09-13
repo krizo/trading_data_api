@@ -1,9 +1,9 @@
-from typing import Dict, List
+import random
+from typing import Dict, List, Generator
 
-import numpy as np
 from fastapi import HTTPException
 
-from config.consts import MAX_SYMBOLS_COUNT, MAX_TRADE_POINTS_COUNT
+from config.consts import MAX_SYMBOLS_COUNT, MAX_TRADE_POINTS_COUNT, MAX_K_VALUE, TEST_SYMBOL
 from helpers.decorators import log_execution_time
 
 
@@ -15,13 +15,22 @@ class Database:
     statistical analysis on recent trading prices for specified symbols.
     """
 
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(Database, cls).__new__(cls)
+        return cls._instance
+
     def __init__(self):
-        self.data: Dict[str, List[float]] = {}
+        if not hasattr(self, 'data'):  # Ensure the data dict is only initialized once
+            self.data: Dict[str, List[float]] = {}
 
+    @staticmethod
     def __name__(self):
-        return "Server"
+        return "Database"
 
-    def add_values(self, symbol: str, values: list):
+    def add_batch(self, symbol: str, values: List[float]):
         """
         Add a batch of trading prices for a given financial instrument.
         :param symbol: String identifier for the financial instrument.
@@ -29,13 +38,13 @@ class Database:
         """
         if symbol not in self.data:
             if len(self.data.keys()) == MAX_SYMBOLS_COUNT:
-                HTTPException(status_code=404, detail=f"Symbols limit reached ({MAX_SYMBOLS_COUNT})")
+                raise HTTPException(status_code=404, detail=f"Symbols limit reached ({MAX_SYMBOLS_COUNT})")
             self.data[symbol] = []
         if len(values) > MAX_TRADE_POINTS_COUNT:
-            HTTPException(status_code=404, detail=f"Values count is abpve the limit ({MAX_TRADE_POINTS_COUNT})")
+            raise HTTPException(status_code=404, detail=f"Values count exceeds the limit ({MAX_TRADE_POINTS_COUNT})")
         self.data[symbol].extend(values)
 
-    def get_values(self, symbol: str, num_points: int = 10):
+    def get_values(self, symbol: str, num_points: int = 0):
         """
         Retrieve the most recent `num_points` data points for the specified financial instrument.
         Raises an HTTPException if the symbol is not found or there is no data available.
@@ -61,7 +70,6 @@ class Database:
         """
         if symbol not in self.data:
             raise HTTPException(status_code=404, detail="Symbol not found")
-
         del self.data[symbol]
 
     def clear(self):
@@ -116,6 +124,7 @@ class Database:
             "last": values[-1],
             "avg": avg_value,
             "var": variance,
+            "size": len(values)
         }
 
         return stats

@@ -1,12 +1,14 @@
 import json
+import math
+import random
 import sys
 
-import numpy as np
 import pytest
 
+from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.assertions import assert_equals
 from helpers.generators import SymbolGenerator
-from models.stats_model import StatsResponse
+from models.stats_response_model import StatsResponse
 from senders.sender import Sender
 import numpy as np
 
@@ -14,7 +16,7 @@ import numpy as np
 test_data = [
     {
         "symbol": next(SymbolGenerator()),
-        "values": [123.45, 124.56, 125.67, 126.78]
+        "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
     },
     {
         "symbol": next(SymbolGenerator()),
@@ -22,8 +24,8 @@ test_data = [
     },
     {
         "symbol": next(SymbolGenerator()),
-        "values": [sys.float_info.min, -sys.float_info.min]
-    }
+        "values": [math.sqrt(sys.float_info.max)]
+    },
 ]
 
 
@@ -53,7 +55,7 @@ def test_add_batch_positive(data):
     Verifies if the batch request is successful.
     """
     response = Sender.add_batch(data.get('symbol'), data.get('values'))
-    assert response.ok, f"Request failed for symbol: {data.get('symbol')}"
+    assert response.ok, f"Request failed for symbol: {data.get('symbol')}. Response: {response.text}"
 
 
 def test_get_values_positive(data):
@@ -71,8 +73,8 @@ def test_get_values_positive(data):
 
     content = json.loads(response.content)
 
-    assert_equals(actual_value=content['symbol'], expected=symbol, description="Invalid symbol value")
-    assert_equals(actual_value=content['values'], expected=expected_values, description="Invalid values")
+    assert_equals(actual_value=content['symbol'], expected=symbol, description="Symbol")
+    assert_equals(actual_value=content['values'], expected=expected_values)
 
 
 def test_get_stats_positive(data):
@@ -82,14 +84,15 @@ def test_get_stats_positive(data):
     symbol, expected_values = data['symbol'], data['values']
     Sender.add_batch(symbol, expected_values)
 
-    response = Sender.get_stats(data['symbol'], 1)
+    k_value = math.floor(math.log10(len(expected_values))) if len(expected_values) > 10 else 1
+    response = Sender.get_stats(data['symbol'], k_value)
     content = json.loads(response.content)
 
     # Check if all metrics are in the response
     assert sorted(StatsResponse.model_fields) == sorted(content.keys())
 
-    assert_equals(content['min'], np.min(data['values']), "Invalid min value")
-    assert_equals(content['max'], np.max(data['values']), "Invalid max value")
-    assert_equals(content['avg'], np.mean(data['values']), "Invalid avg value")
-    assert_equals(content['var'], np.var(data['values']), "Invalid var value")
-    assert_equals(content['last'], data['values'][-1], "Invalid last value")
+    assert_equals(content['min'], np.min(data['values']), "/stats/ 'min' value")
+    assert_equals(content['max'], np.max(data['values']), "/stats/ 'max' value")
+    assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value", round_precision=8)
+    assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value", round_precision=8)
+    assert_equals(content['last'], data['values'][-1], "/stats/ 'last' value")

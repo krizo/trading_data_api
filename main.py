@@ -5,10 +5,10 @@ from fastapi import FastAPI
 from config.db import Database
 from config.logging_config import setup_logger
 from models.add_batch_model import AddBatchRequest
-from models.stats_model import StatsResponse
+from models.stats_response_model import StatsResponse
 
-app = FastAPI(debug=True)
 db = Database()
+app = FastAPI(debug=True)
 
 LOG = setup_logger(__name__)
 
@@ -23,14 +23,14 @@ async def add_batch(data: AddBatchRequest):
     """
     symbol = data.symbol
     values = data.values
-    db.add_values(symbol, values)
+    db.add_batch(symbol, values)
     return {f"Successfully added {len(values)} values for symbol '{symbol}'"}
 
 
 @app.get("/get_values/{symbol}")
 async def get_values(symbol: str):
     """
-    Get trading values for a given financial instrument.
+    Get all trading values for a given financial instrument.
 
     - **symbol**: String identifier for the financial instrument.
     """

@@ -12,9 +12,9 @@ def log_execution_time(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        execution_time = round((end_time - start_time), 3)
+        execution_time = round((end_time - start_time), 3) * 1000
         from main import LOG
-        LOG.info(f"Execution time of {args[0].__name__}.{func.__name__.upper()}: {execution_time} seconds")
+        LOG.info(f"Execution time of {func.__name__.upper()}: {execution_time} milliseconds")
         return result
 
     return wrapper
