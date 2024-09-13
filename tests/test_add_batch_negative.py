@@ -2,21 +2,18 @@ import json
 
 import pytest
 import random
-from typing import List, Dict
-from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT
-from helpers.generators import SymbolGenerator
+from typing import Dict
 
-from senders.sender import Sender
+from requests import Response
+
+from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
+from helpers.generators import SymbolGenerator
+from main import LOG
+
+from sender import Sender
 
 # Test data representing different negative scenarios
 test_data_negative = [
-    # {
-    #     "symbol": "SYM11",  # Using a fixed symbol to check for uniqueness limit
-    #     "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)],
-    #     "expected_status_code": 400,
-    #     "expected_message": "symbol limit exceeded",
-    #     "test_description": "Test with more than 10 unique symbols"
-    # },
     {
         "symbol": next(SymbolGenerator()),
         "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT + 1)],
@@ -47,10 +44,10 @@ test_data_negative = [
         "test_description": "Test with out-of-range values (negative values)"
     },
     {
-        "symbol": "THIS_IS_TOO_LONG",  # Invalid symbol length
+        "symbol": next(SymbolGenerator(length=MAX_SYMBOLS_LENGTH + 1)),
         "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)],
         "expected_status_code": 422,
-        "expected_message": "string should have at most 10 characters",
+        "expected_message": f'Symbol length must not exceed {MAX_SYMBOLS_LENGTH} characters.',
         "test_description": "Test with symbol exceeding the maximum length"
     }
 ]
@@ -87,10 +84,9 @@ def test_add_batch_negative(data):
     response = Sender.add_batch(data.get('symbol'), data.get('values'))
     assert response.status_code == data.get('expected_status_code'), \
         f"Unexpected status code for symbol: {data.get('symbol')}. Response: {response.text}"
-    response_message = json.loads(response.content)
-    error_msg = response_message.get('detail')[0].get('msg').lower()
+    # error_msg = response_message.get('detail')[0].get('msg').lower()
     expected_msg = data.get('expected_message').lower()
-    assert expected_msg in error_msg, f"Expected message '{data.get('expected_message')}' in error message: {error_msg}"
+    assert_error_message(expected_msg=expected_msg, response=response)
 
 
 def test_add_batch_negative_too_many_symbols():
@@ -99,7 +95,13 @@ def test_add_batch_negative_too_many_symbols():
         response = Sender.add_batch(symbol=symbol, values=[100.0, 200.0, 300.0])
         assert response.ok
     response = Sender.add_batch(symbol="SYMX", values=[100.0, 200.0, 300.0])
-    response_message = json.loads(response.content)
     expected_msg = f'symbols limit reached ({MAX_SYMBOLS_COUNT})'
-    error_msg = response_message.get('detail').lower()
+    assert_error_message(expected_msg=expected_msg, response=response)
+
+
+def assert_error_message(expected_msg: str, response: Response):
+    response_message = json.loads(response.content)
+    error = response_message.get('detail')
+    error_msg = error[0].get('msg').lower() if isinstance(error, list) else response_message.get('detail').lower()
+    LOG.info(f"Check expected error message: {error_msg}")
     assert expected_msg in error_msg, f"Expected message {expected_msg} not in error message: {error_msg}"

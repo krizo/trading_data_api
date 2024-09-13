@@ -1,9 +1,9 @@
-from typing import List, Iterable
 import pytest
 import numpy as np
-from config.consts import MAX_TRADE_POINTS_COUNT, MAX_K_VALUE
-from helpers.generators import chunk_data, generate_values
-from senders.sender import Sender
+from config.consts import MAX_K_VALUE
+from config.db import Database
+from helpers.generators import generate_values
+from sender import Sender
 from helpers.assertions import assert_equals
 
 k_values = range(1, MAX_K_VALUE + 1)
@@ -12,6 +12,16 @@ k_values = range(1, MAX_K_VALUE + 1)
 @pytest.fixture(scope='session', autouse=True)
 def symbol():
     return "AAPL"
+
+
+pytest.fixture(scope='session', autouse=True)
+
+
+def setup():
+    """
+    Clear database before all tests are ran
+    """
+    Sender.clear_db()
 
 
 @pytest.fixture
@@ -57,8 +67,6 @@ def tests_stats_positive_k_value_from_1_to_max(generate_data):
     assert_equals(actual_value=stats_data["min"], expected=np.min(truncated_values), description='stats["min"]')
     assert_equals(actual_value=stats_data["max"], expected=np.max(truncated_values), description='stats["min"]')
     assert_equals(actual_value=stats_data["last"], expected=truncated_values[-1], description='stats["last"]')
-    assert_equals(actual_value=int(round(stats_data["avg"], 8)), expected=int(round(np.mean(truncated_values), 8)),
-                  description='stats["avg"]')
-    assert_equals(actual_value=stats_data["var"], expected=np.var(truncated_values), round_precision=4,
-                  description='stats["var"]')
+    assert_equals(actual_value=stats_data["avg"], expected=np.mean(truncated_values), description='stats["avg"]')
+    assert_equals(actual_value=stats_data["var"], expected=np.var(truncated_values), description='stats["var"]')
     assert_equals(actual_value=stats_data["size"], expected=len(truncated_values), description='stats["size"]')

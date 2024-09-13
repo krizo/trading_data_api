@@ -6,6 +6,7 @@ import logging
 from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT
 from helpers.decorators import log_execution_time
 from helpers.generators import chunk_data
+from main import LOG
 
 
 class Sender:
@@ -14,8 +15,6 @@ class Sender:
     This class contains specific methods for each API operation.
     """
     base_url = "http://localhost:8000"
-    logger = logging.getLogger('SenderLogger')
-    logging.basicConfig(level=logging.INFO)
 
     @classmethod
     def send_request(cls, method: str, endpoint: str, data: Optional[Dict] = None,
@@ -30,22 +29,13 @@ class Sender:
         :return: Response object.
         """
         url = f"{cls.base_url}/{endpoint}"
-        cls.logger.info(f"Sending {method} request to {url} with data: {data} and params: {params}")
 
         try:
-            if method == 'POST':
-                response = requests.post(url, json=data)
-            elif method == 'GET':
-                response = requests.get(url, params=params)
-            elif method == 'DELETE':
-                response = requests.delete(url)
-            else:
-                raise ValueError("Unsupported HTTP method")
+            response = requests.request(method, url, json=data, params=params)
         except requests.RequestException as e:
-            cls.logger.error(f"Request failed: {e}")
+            LOG.error(f"Request failed: {e}")
             raise
 
-        cls.logger.info(f"Received response with status code: {response.status_code}")
         return response
 
     @classmethod
@@ -55,7 +45,7 @@ class Sender:
         """
         endpoint = "add_batch"
         data = {"symbol": symbol, "values": values}
-        return cls.send_request('POST', endpoint, data)
+        return cls.send_request('POST', endpoint, data=data)
 
     @classmethod
     def get_values(cls, symbol: str) -> requests.Response:
@@ -103,7 +93,7 @@ class Sender:
 
         :param symbol: Financial instrument symbol.
         :param generated_data: Generator or iterable of trading values.
-        :param chunk_size: Maximum size of each chunk.
+        :param chunk_size: Maximum size  of each chunk.
         :return: A list of all values sent to the server.
         """
         values_sent: List[float] = []
@@ -114,6 +104,6 @@ class Sender:
         for chunk in chunks:
             add_response = cls.add_batch(symbol, chunk)
             if add_response.status_code != 200:
-                cls.logger.error(f"Unexpected status code: {add_response.status_code}")
+                LOG.error(f"Unexpected status code: {add_response.status_code}")
             values_sent.extend(chunk)
         return values_sent

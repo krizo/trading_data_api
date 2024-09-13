@@ -9,7 +9,7 @@ from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.assertions import assert_equals
 from helpers.generators import SymbolGenerator
 from models.stats_response_model import StatsResponse
-from senders.sender import Sender
+from sender import Sender
 import numpy as np
 
 # Test data
@@ -69,7 +69,7 @@ def test_get_values_positive(data):
 
     # Get the values
     response = Sender.get_values(symbol)
-    assert response.ok, "Request failed"
+    assert response.ok, f"Request failed. Response: {response.text}"
 
     content = json.loads(response.content)
 
@@ -93,6 +93,7 @@ def test_get_stats_positive(data):
 
     assert_equals(content['min'], np.min(data['values']), "/stats/ 'min' value")
     assert_equals(content['max'], np.max(data['values']), "/stats/ 'max' value")
-    assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value", round_precision=8)
-    assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value", round_precision=8)
+    assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value")
+    assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value")
     assert_equals(content['last'], data['values'][-1], "/stats/ 'last' value")
+    assert_equals(content['size'], len(data['values']), "/size/ 'last' value")

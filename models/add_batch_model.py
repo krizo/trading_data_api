@@ -1,6 +1,6 @@
 from pydantic import BaseModel, conlist, validator, constr
 
-from config.consts import MAX_TRADE_POINTS_COUNT
+from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_LENGTH
 
 
 class AddBatchRequest(BaseModel):
@@ -15,6 +15,6 @@ class AddBatchRequest(BaseModel):
 
     @validator('symbol')
     def check_symbol_length(cls, symbol):
-        if len(symbol) > 4:
-            raise ValueError('Symbol length must not exceed 10 characters.')
+        if len(symbol) > MAX_SYMBOLS_LENGTH:
+            raise ValueError(f'Symbol length must not exceed {MAX_SYMBOLS_LENGTH} characters.')
         return symbol
