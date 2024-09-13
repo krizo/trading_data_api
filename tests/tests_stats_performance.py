@@ -66,4 +66,3 @@ def tests_stats_negative_k_value_over_limit():
     stats_response = Sender.get_stats(symbol, 10)
     assert_equals(stats_response.status_code, 400, "/stats expected to be 400")
     assert_error_message("'k' must be between 1 and 8", stats_response)
-    pass
