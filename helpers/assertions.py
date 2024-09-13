@@ -1,3 +1,7 @@
+import json
+
+from requests import Response
+
 from main import LOG
 import math
 
@@ -26,3 +30,11 @@ def assert_equals(actual_value: any, expected: any, description: str = None, tol
     assert actual_value == expected, (
         f"{description}: Expected value '{expected}', but got '{actual_value}'"
     )
+
+
+def assert_error_message(expected_msg: str, response: Response):
+    response_message = json.loads(response.content)
+    error = response_message.get('detail')
+    error_msg = error[0].get('msg').lower() if isinstance(error, list) else response_message.get('detail').lower()
+    LOG.info(f"Check expected error message: {error_msg}")
+    assert expected_msg in error_msg, f"Expected message {expected_msg} not in error message: {error_msg}"

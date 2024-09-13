@@ -2,16 +2,11 @@ import pytest
 import numpy as np
 from config.consts import MAX_K_VALUE
 from config.db import Database
-from helpers.generators import generate_values
+from helpers.generators import generate_values, SymbolGenerator
 from sender import Sender
-from helpers.assertions import assert_equals
+from helpers.assertions import assert_equals, assert_error_message
 
 k_values = range(1, MAX_K_VALUE + 1)
-
-
-@pytest.fixture(scope='session', autouse=True)
-def symbol():
-    return "AAPL"
 
 
 @pytest.fixture(scope='session', autouse=True)
@@ -61,3 +56,14 @@ def tests_stats_positive_k_value_from_1_to_max(generate_data):
     assert_equals(actual_value=stats_data["avg"], expected=np.mean(values), description='stats["avg"]')
     assert_equals(actual_value=stats_data["var"], expected=np.var(values), description='stats["var"]')
     assert_equals(actual_value=stats_data["size"], expected=len(values), description='stats["size"]')
+
+
+def tests_stats_negative_k_value_over_limit():
+    """
+    Negative test to check limit for k_value on /stats endpoint
+    """
+    symbol = 'TEST'
+    stats_response = Sender.get_stats(symbol, 10)
+    assert_equals(stats_response.status_code, 400, "/stats expected to be 400")
+    assert_error_message("'k' must be between 1 and 8", stats_response)
+    pass
