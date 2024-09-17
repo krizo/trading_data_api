@@ -24,3 +24,5 @@ uvicorn==0.30.6
 vcrpy==6.0.1
 wrapt==1.16.0
 yarl==1.11.1
+gevent~=24.2.1
+locust~=2.31.6
