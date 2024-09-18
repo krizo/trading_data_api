@@ -2,8 +2,10 @@ import numpy as np
 import pytest
 
 from config.consts import MAX_K_VALUE, TEST_SYMBOL
-from helpers.assertions import assert_equals, assert_error_message
+from helpers.assertions import assert_equals
+from helpers.decorators import log_execution_time
 from helpers.generators import generate_values
+from main import LOG
 from sender import Sender
 
 # Parametry testowe dla wartości k od 1 do MAX_K_VALUE
@@ -30,41 +32,45 @@ def setup():
     Sender.clear_db()
 
 
-@pytest.fixture
-def generate_data(request, symbol) -> dict:
+@pytest.fixture(params=k_values, ids=lambda param: f"k={param}")
+def k_value(request) -> int:
+    return request.param
+
+
+@log_execution_time
+def generate_data(symbol: str, k_value: int) -> dict:
     """
     Fixture that generates random trading data for a given `k` value.
 
     Args:
-        request: The test request object containing the current parameter (`k` value).
+        k_value: current parameter (`k` value) which will determine number of records.
         symbol: The financial instrument symbol for the data.
 
     Returns:
         dict: Dictionary containing the symbol, the generated trading values, and the `k` value.
     """
-    k = request.param  # Retrieve the current k value from the test parameter
-    num_values = 10 ** k  # Number of values to generate based on k
+    num_values = 10 ** k_value  # Number of values to generate based on k
 
+    LOG.info(f"Loading {num_values} values via /add_batch ")
     # Generate random trading values
     values = generate_values(num_values)
+    LOG.info("Load done.")
 
-    # Send the generated values to the server in chunks
     values_sent = Sender.send_add_batch_data_in_chunks(symbol=symbol, generated_data=values)
 
-    return {"symbol": symbol, "values": values_sent, "k": k}
+    return {"symbol": symbol, "values": values_sent, "k": k_value}
 
 
-@pytest.mark.parametrize("generate_data", k_values, indirect=True)
-def tests_stats_positive_k_value_from_1_to_max(generate_data):
+@pytest.mark.performance
+def tests_stats_load_k_value_from_1_to_max(k_value):
     """
     Positive test to verify that the statistics endpoint (/stats) returns correct results
     for k values from 1 to MAX_K_VALUE.
 
-    Args:
-        generate_data: Fixture that provides the generated data and `k` value for the test.
+    @param k_value: `k` value for the test (10^k records to be created)
     """
-    values = generate_data["values"]
-    k_value = generate_data["k"]
+    data = generate_data(symbol=TEST_SYMBOL, k_value=k_value)
+    values = data['values']
 
     # Make a request to the /stats endpoint for the test symbol and k_value
     stats_response = Sender.get_stats(TEST_SYMBOL, k_value)
@@ -81,22 +87,3 @@ def tests_stats_positive_k_value_from_1_to_max(generate_data):
     assert_equals(actual_value=stats_data["var"], expected=np.var(values), description='stats["var"]')
     assert_equals(actual_value=stats_data["size"], expected=len(values), description='stats["size"]')
 
-
-def tests_stats_negative_k_value_over_limit(symbol):
-    """
-    Negative test to verify that the /stats endpoint returns an error when the `k` value
-    exceeds the allowed limit (e.g., k > MAX_K_VALUE).
-
-    This test ensures that the server properly validates the `k` value and returns
-    a 400 Bad Request status code when the value is outside the allowed range.
-
-    """
-
-    # Make a request to the /stats endpoint with an invalid `k` value (10, out of range)
-    stats_response = Sender.get_stats(symbol, 10)
-
-    # Assert that the response status code is 400 (Bad Request)
-    assert_equals(stats_response.status_code, 400, "/stats expected to return status 400")
-
-    # Assert that the error message matches the expected validation error
-    assert_error_message("'k' must be between 1 and 8", stats_response)

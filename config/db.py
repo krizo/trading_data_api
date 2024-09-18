@@ -1,8 +1,6 @@
 from typing import Dict, List
-from data_structures.bst import BST
-from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
-from typing import Dict, List
 
+from config.consts import MAX_K_VALUE
 from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
 from data_structures.bst import BST
 
@@ -77,6 +75,9 @@ class Database:
         @returns: A dictionary containing the min, max, last, avg, var, and size values.
         @raises ValueError: If the symbol is not found in the database.
         """
+        if k > MAX_K_VALUE:
+            raise ValueError("Symbol not found")
+
         if symbol not in self.data_store:
             raise ValueError("Symbol not found")
 

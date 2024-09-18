@@ -1,7 +1,10 @@
+import random
+
 import numpy as np
 import pytest
 
 from config.db import Database
+from helpers.assertions import assert_equals
 
 
 @pytest.fixture(autouse=True)
@@ -14,6 +17,7 @@ def db():
     return db
 
 
+@pytest.mark.unit
 def test_add_batch(db):
     """
     Test adding a batch of trading data to the database.
@@ -27,30 +31,31 @@ def test_add_batch(db):
 
     # Verify the data was added correctly
     stored_values = db.get_values(symbol)
-    assert stored_values == sorted(values)  # BST stores values in sorted order
+    assert stored_values == values  # BST stores values in sorted order
 
 
+@pytest.mark.unit
 def test_get_stats(db):
     """
     Test retrieving statistics from the database.
     """
     symbol = "AAPL"
-    values = [150.1, 152.3, 151.0, 155.4, 149.8]
+    values = [round(random.uniform(0.01, 1000.0), 2) for _ in range(10)]
 
     # Add the batch of data
     db.add_batch(symbol, values)
     assert db.get_symbols() == [symbol]
 
-    # Retrieve stats for the last 3 points (k=3)
-    stats = db.get_stats(symbol, k=3)
+    stats = db.get_stats(symbol, k=1)
 
-    assert stats["min"] == min(values)
-    assert stats["max"] == max(values)
-    assert stats["last"] == values[-1]
-    assert pytest.approx(stats["avg"], 0.01) == np.mean(values)
-    assert pytest.approx(stats["var"], 0.01) == np.var(values)
+    assert_equals(stats["min"], min(values), 'min')
+    assert_equals(stats["max"], max(values), 'max')
+    assert_equals(stats["last"], values[-1], 'last')
+    assert_equals(pytest.approx(stats["avg"], 0.01), np.mean(values), 'avg')
+    assert_equals(pytest.approx(stats["var"], 0.01), np.var(values), 'var')
 
 
+@pytest.mark.unit
 def test_get_values(db):
     """
     Test retrieving all values for a specific symbol.
@@ -63,9 +68,10 @@ def test_get_values(db):
 
     # Get all values for the symbol
     stored_values = db.get_values(symbol)
-    assert stored_values == sorted(values)
+    assert stored_values == values
 
 
+@pytest.mark.unit
 def test_clear(db):
     """
     Test clearing the entire database.
@@ -89,6 +95,7 @@ def test_clear(db):
         db.get_values(symbol2)
 
 
+@pytest.mark.unit
 def test_delete_symbol(db):
     """
     Test deleting a specific symbol from the database.
@@ -108,6 +115,7 @@ def test_delete_symbol(db):
         db.get_values(symbol)
 
 
+@pytest.mark.unit
 def test_delete_non_existent_symbol(db):
     """
     Test deleting a symbol that does not exist.

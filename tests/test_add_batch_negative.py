@@ -1,11 +1,11 @@
-import pytest
 import random
 from typing import Dict
+
+import pytest
 
 from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
 from helpers.assertions import assert_error_message
 from helpers.generators import SymbolGenerator
-
 from sender import Sender
 
 # Test data representing different negative scenarios
@@ -70,6 +70,7 @@ def setup_and_teardown():
     yield  # Run test
 
 
+@pytest.mark.functional
 def test_add_batch_negative(data):
     """
     Test for adding a batch of trading data with negative cases.
@@ -84,6 +85,7 @@ def test_add_batch_negative(data):
     assert_error_message(expected_msg=expected_msg, response=response)
 
 
+@pytest.mark.functional
 def test_add_batch_negative_too_many_symbols():
     ok_symbols = [f"SYM{i}" for i in range(MAX_SYMBOLS_COUNT)]
     for symbol in ok_symbols:
@@ -92,5 +94,3 @@ def test_add_batch_negative_too_many_symbols():
     response = Sender.add_batch(symbol="SYMX", values=[100.0, 200.0, 300.0])
     expected_msg = f'symbols limit reached ({MAX_SYMBOLS_COUNT})'
     assert_error_message(expected_msg=expected_msg, response=response)
-
-

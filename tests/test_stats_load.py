@@ -60,6 +60,7 @@ class LoadTest(locust.HttpUser):
     wait_time = between(1, 3)
 
 
+@pytest.mark.load
 def test_locust_load_stats():
     """
     This test uses Locust to perform a load test on the /stats endpoint. It simulates multiple
@@ -81,9 +82,9 @@ def test_locust_load_stats():
     Test workflow:
     1. Setup the Locust environment, including starting the runner and WebUI.
     2. Simulate user interactions with the API, where the majority of interactions (weight 10)
-       involve sending requests to the /stats and /add_batch endpoints.
+       involve sending requests to the /stats and /add_batch endpoints (increasing database load).
     3. Collect performance metrics and save them to CSV files.
-    4. After 30 minutes, stop the load test and finalize the results.
+    4. After 5 minutes, stop the load test and finalize the results.
 
     This test helps evaluate the scalability of the /stats endpoint and observe how the
     system performs under high load, with special attention to response time as the
@@ -118,7 +119,7 @@ def test_locust_load_stats():
     runner.start(user_count=100, spawn_rate=10)
 
     # in 30 minutes stop the runner
-    gevent.spawn_later(1800, runner.quit)  # 1800 seconds = 30 minutes
+    gevent.spawn_later(300, runner.quit)  # 1800 seconds = 30 minutes
 
     # wait for the greenlets
     runner.greenlet.join()

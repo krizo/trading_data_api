@@ -73,9 +73,10 @@ def test_get_values_positive(data):
     assert response.ok, f"Request failed. Response: {response.text}"
     actual_values = json.loads(response.content.decode())
 
-    assert_equals(actual_value=actual_values, expected=sorted(expected_values))
+    assert_equals(actual_value=actual_values, expected=expected_values)
 
 
+@pytest.mark.functional
 def test_get_stats_positive(data):
     """
     Test for getting statistics for trading values for a given symbol.
