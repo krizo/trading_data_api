@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from config.consts import MAX_K_VALUE
+from config.consts import MAX_K_VALUE, TEST_SYMBOL
 from config.db import Database
 from helpers.generators import generate_values, SymbolGenerator
 from sender import Sender
@@ -9,12 +9,19 @@ from helpers.assertions import assert_equals, assert_error_message
 k_values = range(1, MAX_K_VALUE + 1)
 
 
-@pytest.fixture(scope='session', autouse=True)
-def setup():
+@pytest.fixture
+def symbol() -> str:
+    return TEST_SYMBOL
+
+
+@pytest.fixture(autouse=True)
+def database():
     """
     Clear database before all tests are ran
     """
-    Sender.clear_db()
+    db = Database()
+    db.clear()
+    return db
 
 
 @pytest.fixture
@@ -41,10 +48,11 @@ def generate_data(request, symbol) -> dict:
 @pytest.mark.parametrize("generate_data", k_values, indirect=True)
 def tests_stats_positive_k_value_from_1_to_max(generate_data):
     values = generate_data["values"]
-    symbol = generate_data["symbol"]
     k_value = generate_data["k"]
 
-    stats_response = Sender.get_stats(symbol, k_value)
+    db.add_batch
+
+    stats_response = Sender.get_stats(TEST_SYMBOL, k_value)
     assert stats_response.ok, f"Request to stats failed with status {stats_response.status_code}"
 
     stats_data = stats_response.json()

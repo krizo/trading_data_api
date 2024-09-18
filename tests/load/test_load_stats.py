@@ -8,7 +8,7 @@ from locust import between
 from locust.env import Environment
 from locust.stats import stats_history, stats_printer, StatsCSVFileWriter
 
-from config.consts import TEST_SYMBOL
+from config.consts import TEST_SYMBOL, MAX_K_VALUE
 from helpers.generators import generate_values
 from main import LOG
 from sender import Sender
@@ -20,8 +20,7 @@ def generate_data():
     Fixture that generates random trading data for a given `k` value.
     """
     Sender.clear_db()
-    k = 8  # Retrieve the current k value from the param
-    num_values = 10 ** k
+    num_values = 10 ** MAX_K_VALUE
 
     # Using a generator to create values
     values = generate_values(num_values)
@@ -42,8 +41,7 @@ class UsersTest(locust.TaskSet):
         Send GET requests to the /stats endpoint for different values of 'k'.
         The number of requests is based on the weight assigned in the @task decorator.
         """
-        k_value = 8
-        self.client.get(f"/stats?symbol={TEST_SYMBOL}&k={k_value}")
+        self.client.get(f"/stats?symbol={TEST_SYMBOL}&k={MAX_K_VALUE}")
         time.sleep(1)  # Pause to simulate realistic user wait times between requests
 
 
