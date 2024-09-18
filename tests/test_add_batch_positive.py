@@ -3,14 +3,13 @@ import math
 import random
 import sys
 
+import numpy as np
 import pytest
 
 from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.assertions import assert_equals
-from helpers.generators import SymbolGenerator
 from models.stats_response_model import StatsResponse
 from sender import Sender
-import numpy as np
 
 test_data = [
     {
