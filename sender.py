@@ -1,7 +1,8 @@
-import requests
-from typing import List, Iterable, Dict, Optional
 import logging
-from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import List, Iterable, Dict, Optional
+
+import requests
+
 from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.decorators import log_execution_time
 from helpers.generators import chunk_data
@@ -22,20 +23,16 @@ class Sender:
         """
         Generic method for sending HTTP requests and logging information about them.
 
-        Args:
-            method (str): HTTP method (GET, POST, DELETE).
-            endpoint (str): API endpoint (without base URL).
-            data (Optional[Dict]): Payload for POST requests (optional).
-            params (Optional[Dict]): Query parameters for GET requests (optional).
-
-        Returns:
-            requests.Response: Response object.
+        @param method: HTTP method (GET, POST, DELETE).
+        @param endpoint: API endpoint (without base URL).
+        @param data: Payload for POST requests (optional).
+        @param params: Query parameters for GET requests (optional).
+        @returns: Response object.
         """
         url = f"{cls.base_url}/{endpoint}"
 
         try:
             response = requests.request(method, url, json=data, params=params)
-            response.raise_for_status()  # Raise an error for bad status codes
         except requests.RequestException as e:
             LOG.error(f"Request failed: {e}")
             raise
@@ -47,12 +44,9 @@ class Sender:
         """
         Send a POST request to add a batch of trading prices for a given financial instrument.
 
-        Args:
-            symbol (str): The financial instrument's identifier.
-            values (List[float]): List of trading prices to be added.
-
-        Returns:
-            requests.Response: Response from the server.
+        @param symbol: The financial instrument's identifier.
+        @param values: List of trading prices to be added.
+        @returns: Response object from the server.
         """
         endpoint = "add_batch"
         data = {"symbol": symbol, "values": values}
@@ -63,11 +57,8 @@ class Sender:
         """
         Send a GET request to retrieve trading values for a specific symbol.
 
-        Args:
-            symbol (str): The financial instrument's identifier.
-
-        Returns:
-            requests.Response: Response from the server containing values.
+        @param symbol: The financial instrument's identifier.
+        @returns: Response object containing trading values.
         """
         endpoint = f"get_values/{symbol}"
         return cls.send_request('GET', endpoint)
@@ -77,9 +68,7 @@ class Sender:
         """
         Send a GET request to retrieve trading symbols.
 
-
-        Returns:
-            requests.Response: Response from the server containing values.
+        @returns: Response object containing a list of trading symbols.
         """
         endpoint = f"symbols"
         return cls.send_request('GET', endpoint)
@@ -89,11 +78,8 @@ class Sender:
         """
         Send a DELETE request to remove a specific symbol from the database.
 
-        Args:
-            symbol (str): The financial instrument's identifier.
-
-        Returns:
-            requests.Response: Response from the server.
+        @param symbol: The financial instrument's identifier.
+        @returns: Response object from the server confirming deletion.
         """
         endpoint = f"delete_symbol/{symbol}"
         return cls.send_request('DELETE', endpoint)
@@ -103,8 +89,7 @@ class Sender:
         """
         Send a DELETE request to clear the entire database.
 
-        Returns:
-            requests.Response: Response from the server confirming the deletion.
+        @returns: Response object from the server confirming database clearance.
         """
         endpoint = "clear"
         return cls.send_request('DELETE', endpoint)
@@ -115,12 +100,9 @@ class Sender:
         """
         Send a GET request to retrieve statistical analysis of trading data for a specific symbol.
 
-        Args:
-            symbol (str): The financial instrument's identifier.
-            k (int): An integer specifying the number of last 1e{k} data points to analyze.
-
-        Returns:
-            requests.Response: Response from the API with statistics (min, max, last, avg, var).
+        @param symbol: The financial instrument's identifier.
+        @param k: An integer specifying the number of last 1e{k} data points to analyze.
+        @returns: Response from the API, which includes statistics (min, max, last, avg, var).
         """
         endpoint = "stats"
         params = {"symbol": symbol, "k": k}
@@ -132,13 +114,10 @@ class Sender:
         """
         Send trading values to the server in chunks and return the values sent.
 
-        Args:
-            symbol (str): Financial instrument symbol.
-            generated_data (Iterable[float]): Generator or iterable of trading values.
-            chunk_size (int): Maximum size of each chunk.
-
-        Returns:
-            List[float]: A list of all values sent to the server.
+        @param symbol: Financial instrument symbol.
+        @param generated_data: Generator or iterable of trading values.
+        @param chunk_size: Maximum size of each chunk.
+        @returns: A list of all values sent to the server.
         """
         values_sent: List[float] = []
 
