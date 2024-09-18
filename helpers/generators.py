@@ -1,3 +1,4 @@
+import itertools
 import random
 import string
 from typing import Iterable, Generator, List
@@ -32,24 +33,13 @@ class SymbolGenerator:
                 return symbol
 
 
-def chunk_data(data: Iterable[float], chunk_size: int) -> Generator[List[float], None, None]:
-    """
-    Divide the iterable `data` into chunks of `chunk_size`.
-
-    :param data: Iterable (can be generator or list) of floating-point values.
-    :param chunk_size: Maximum size of each chunk.
-    :return: Generator yielding lists of floating-point numbers.
-    """
-    chunk = []
-    for value in data:
-        chunk.append(value)
-        if len(chunk) == chunk_size:
-            yield chunk
-            chunk = []  # Reset chunk
-
-    # Yield any remaining values if the last chunk is incomplete
-    if chunk:
+def chunk_data(data: Iterable[float], chunk_size: int) -> List[List[float]]:
+    """Helper function to split data into chunks."""
+    it = iter(data)
+    chunk = list(itertools.islice(it, chunk_size))
+    while chunk:
         yield chunk
+        chunk = list(itertools.islice(it, chunk_size))
 
 
 def generate_values(num_values: int) -> Generator[float, None, None]:

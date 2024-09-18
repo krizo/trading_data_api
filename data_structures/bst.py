@@ -1,185 +1,130 @@
+from typing import List, Dict
+
+
 class Node:
     def __init__(self, value: float):
         """
         Initialize a new Node in the BST.
 
-        Args:
-            value (float): The trading price value to store in the node.
+        @param value: The trading price value to store in the node.
         """
-        self.value = value
-        self.left = None  # Left child node
-        self.right = None  # Right child node
-        self.count = 1  # Number of occurrences of this value
-        self.size = 1  # Size of the subtree (number of nodes including itself)
+        self.value = value  # The value of the trading price
+        self.left = None  # Left subtree (values less than the current node)
+        self.right = None  # Right subtree (values greater than the current node)
+        self.count = 1  # Number of occurrences of this value (handles duplicates)
+
 
 class BST:
     def __init__(self):
         """
-        Initialize an empty Binary Search Tree.
+        Initialize an empty Binary Search Tree with statistics tracking.
         """
-        self.root = None
-        self.last_inserted_value = None  # Keeps track of the last inserted value
+        self.root = None  # The root of the tree
+        self.last_inserted_value = None  # Tracks the last inserted value
+        self.min_value = float('inf')  # Tracks the minimum value in the tree
+        self.max_value = float('-inf')  # Tracks the maximum value in the tree
+        self.sum_values = 0.0  # Tracks the sum of all inserted values
+        self.count_values = 0  # Tracks the number of inserted values (nodes)
+        self.mean_value = 0.0  # Tracks the mean value of all inserted data
+        self.sum_of_squares = 0.0  # Tracks the sum of squares for variance calculation
+        self.total_size = 0  # Tracks the total number of inserted elements (including duplicates)
 
     def insert(self, value: float):
         """
-        Insert a value into the BST and update the size and last inserted value.
+        Insert a value into the BST and update statistics.
 
-        Args:
-            value (float): The trading price value to insert.
+        @param value: The trading price value to insert.
         """
-        self.root = self._insert(self.root, value)
-        self.last_inserted_value = value  # Track the last inserted value
+        self.root = self._insert(self.root, value)  # Insert the new value into the tree
+        self.last_inserted_value = value  # Update the last inserted value
+
+        # Update statistics
+        self.min_value = min(self.min_value, value)  # Update the minimum value
+        self.max_value = max(self.max_value, value)  # Update the maximum value
+        self.count_values += 1  # Increment the count of inserted values (excluding duplicates)
+        self.sum_values += value  # Add the current value to the total sum
+        self.total_size += 1  # Increment the total size for every insertion, including duplicates
+
+        # Incrementally calculate the new mean
+        old_mean = self.mean_value
+        self.mean_value = self.sum_values / self.count_values
+
+        # Update the sum of squares for variance calculation
+        self.sum_of_squares += (value - old_mean) * (value - self.mean_value)
 
     def _insert(self, node: Node, value: float) -> Node:
         """
         Helper method to recursively insert a value into the BST.
 
-        Args:
-            node (Node): The current node being examined.
-            value (float): The value to insert.
-
-        Returns:
-            Node: The updated node after insertion.
+        @param node: The current node being examined.
+        @param value: The value to insert.
+        @returns: The updated node after insertion.
         """
         if node is None:
-            return Node(value)
+            return Node(value)  # Create a new node when we find an insertion point
 
         if value < node.value:
+            # If the value is less, go to the left subtree
             node.left = self._insert(node.left, value)
         elif value > node.value:
+            # If the value is greater, go to the right subtree
             node.right = self._insert(node.right, value)
         else:
-            node.count += 1  # Handle duplicate values
+            # If the value already exists, increment the count for this node
+            node.count += 1
 
-        # Update the size of the current node's subtree
-        node.size = node.count + (node.left.size if node.left else 0) + (node.right.size if node.right else 0)
         return node
 
-    def get_min(self) -> float:
+    def get_all_values(self) -> List[float]:
         """
-        Get the minimum value stored in the BST.
+        Get all values stored in the BST in sorted order.
 
-        Returns:
-            float: The minimum trading price in the tree.
+        @returns: A list of all values in the BST, sorted in ascending order.
         """
-        return self._min_value(self.root)
+        values = []
+        self._inorder_traversal(self.root, values)
+        return values
 
-    def _min_value(self, node: Node) -> float:
+    def _inorder_traversal(self, node: Node, values: List[float]):
         """
-        Helper method to find the minimum value in a subtree.
+        Perform in-order traversal to gather all values from the BST.
 
-        Args:
-            node (Node): The root node of the subtree.
-
-        Returns:
-            float: The minimum value in the subtree.
+        @param node: The current node in the tree.
+        @param values: List to collect values in sorted order.
         """
-        while node.left:
-            node = node.left
-        return node.value
-
-    def get_max(self) -> float:
-        """
-        Get the maximum value stored in the BST.
-
-        Returns:
-            float: The maximum trading price in the tree.
-        """
-        return self._max_value(self.root)
-
-    def _max_value(self, node: Node) -> float:
-        """
-        Helper method to find the maximum value in a subtree.
-
-        Args:
-            node (Node): The root node of the subtree.
-
-        Returns:
-            float: The maximum value in the subtree.
-        """
-        while node.right:
-            node = node.right
-        return node.value
-
-    def get_last(self) -> float:
-        """
-        Get the most recent value inserted into the BST (not necessarily sorted).
-
-        Returns:
-            float: The most recent trading price.
-        """
-        return self.last_inserted_value
-
-    def get_size(self) -> int:
-        """
-        Get the total number of elements in the BST.
-
-        Returns:
-            int: The total number of elements in the tree.
-        """
-        return self._get_size(self.root)
-
-    def _get_size(self, node: Node) -> int:
-        """
-        Helper method to get the size of the subtree.
-
-        Args:
-            node (Node): The root node of the subtree.
-
-        Returns:
-            int: The size of the subtree rooted at the node.
-        """
-        return node.size if node else 0
-
-    def inorder(self) -> list:
-        """
-        Perform an in-order traversal of the BST and return a sorted list of values.
-
-        Returns:
-            list: A list of trading prices sorted in ascending order.
-        """
-        result = []
-        self._inorder(self.root, result)
-        return result
-
-    def _inorder(self, node: Node, result: list):
-        """
-        Helper method to perform in-order traversal of the BST.
-
-        Args:
-            node (Node): The current node being visited.
-            result (list): The list to append values to.
-        """
-        if not node:
+        if node is None:
             return
-        self._inorder(node.left, result)
-        result.extend([node.value] * node.count)  # Handle duplicate values
-        self._inorder(node.right, result)
+        # Traverse the left subtree
+        self._inorder_traversal(node.left, values)
+        # Add the current node's value(s) to the list
+        values.extend([node.value] * node.count)
+        # Traverse the right subtree
+        self._inorder_traversal(node.right, values)
 
-    def get_k_values(self, k: int) -> list:
+    def get_stats(self) -> Dict[str, float or None]:
         """
-        Retrieve the last 'k' values from the BST in ascending order.
+        Get the current statistics (min, max, last, avg, var, size).
 
-        Args:
-            k (int): The number of values to retrieve.
-
-        Returns:
-            list: A list of the most recent 'k' trading prices.
+        @returns: A dictionary containing min, max, last, avg, var, and size.
         """
-        inorder_values = self.inorder()
-        return inorder_values[-k:]
+        if self.count_values == 0:
+            # If the tree is empty, return None for all statistics
+            return {
+                "min": None,
+                "max": None,
+                "last": None,
+                "avg": None,
+                "var": None,
+                "size": None
+            }
 
-    def calculate_avg_and_var(self, k: int) -> tuple:
-        """
-        Calculate the average and variance of the last 'k' values in the BST.
-
-        Args:
-            k (int): The number of values to consider.
-
-        Returns:
-            tuple: A tuple containing the average and variance of the last 'k' trading prices.
-        """
-        values = self.get_k_values(k)
-        avg_value = sum(values) / len(values)
-        var_value = sum((x - avg_value) ** 2 for x in values) / len(values)
-        return avg_value, var_value
+        # Calculate variance as the sum of squares divided by the number of values
+        variance = self.sum_of_squares / self.count_values if self.count_values > 1 else 0.0
+        return {
+            "min": self.min_value,
+            "max": self.max_value,
+            "last": self.last_inserted_value,
+            "avg": self.mean_value,
+            "var": variance,
+            "size": self.total_size  # Total number of inserted elements
+        }
