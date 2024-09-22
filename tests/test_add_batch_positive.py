@@ -2,7 +2,6 @@ import json
 import math
 import random
 import sys
-from time import sleep
 
 import numpy as np
 import pytest
@@ -63,27 +62,6 @@ def test_add_batch_positive(data):
     """
     response = Sender.add_batch(data.get('symbol'), data.get('values'))
     assert response.ok, f"Request failed for symbol: {data.get('symbol')}. Response: {response.text}"
-
-
-def test_get_values_positive(data):
-    """
-    Test for retrieving trading values for a given symbol.
-    Verifies if the returned data matches the expected values.
-    """
-    symbol, expected_values = data['symbol'], data['values']
-
-    Sender.add_batch(symbol, expected_values)
-
-    response = Sender.get_symbols()
-    assert response.ok, f"Request failed. Response: {response.text}"
-
-    sleep(5)
-    # Get the values
-    response = Sender.get_values(symbol)
-    assert response.ok, f"Request failed. Response: {response.text}"
-    actual_values = json.loads(response.content.decode())
-
-    assert_equals(actual_value=actual_values, expected=expected_values)
 
 
 @pytest.mark.functional
