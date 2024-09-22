@@ -23,7 +23,7 @@ def test_add_batch(db):
     Test adding a batch of trading data to the database.
     """
     symbol = "AAPL"
-    values = [150.1, 152.3, 151.0]
+    values = list(range(1, 14))
 
     # Add the batch of data
     result = db.add_batch(symbol, values)
@@ -61,7 +61,7 @@ def test_get_values(db):
     Test retrieving all values for a specific symbol.
     """
     symbol = "AAPL"
-    values = [150.1, 152.3, 151.0]
+    values = list(range(1, 14))
 
     # Add the batch of data
     db.add_batch(symbol, values)

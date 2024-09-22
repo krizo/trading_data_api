@@ -2,7 +2,7 @@ from typing import Dict, List
 
 from config.consts import MAX_K_VALUE
 from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
-from data_structures.bst import BST
+from data_structures.avl import AVLTree
 
 
 class Database:
@@ -24,7 +24,7 @@ class Database:
         Initialize the in-memory storage for trading symbols.
         This method is called only once during the lifetime of the singleton instance.
         """
-        self.data_store: Dict[str, BST] = {}
+        self.data_store: Dict[str, AVLTree] = {}
 
     def add_batch(self, symbol: str, values: List[float]) -> str:
         """
@@ -56,9 +56,9 @@ class Database:
             if value < 0:
                 raise ValueError("All values must be greater than 0.")
 
-        # If symbol is not in the data store, initialize its BST
+        # If symbol is not in the data store, initialize its AVL
         if symbol not in self.data_store:
-            self.data_store[symbol] = BST()
+            self.data_store[symbol] = AVLTree()
 
         bst = self.data_store[symbol]
         for value in values:

@@ -2,6 +2,7 @@ import json
 import math
 import random
 import sys
+from time import sleep
 
 import numpy as np
 import pytest
@@ -18,10 +19,18 @@ test_data = [
     },
     {
         "symbol": "TST2",
-        "values": [0, 0.0]
+        "values": list(range(1, 14))
     },
     {
         "symbol": "TST3",
+        "values": [0, 0.0]
+    },
+    {
+        "symbol": "TST4",
+        "values": [0, 0.0]
+    },
+    {
+        "symbol": "TST5",
         "values": [math.sqrt(sys.float_info.max)]  # Can't be more because ** 2 is used in calculating variation
     },
 ]
@@ -68,6 +77,7 @@ def test_get_values_positive(data):
     response = Sender.get_symbols()
     assert response.ok, f"Request failed. Response: {response.text}"
 
+    sleep(5)
     # Get the values
     response = Sender.get_values(symbol)
     assert response.ok, f"Request failed. Response: {response.text}"
