@@ -82,14 +82,14 @@ class Database:
             raise ValueError("Symbol not found")
 
         bst = self.data_store[symbol]
-
+        last_n = 10 ** k
         return {
-            "min": bst.get_stats().get('min'),
-            "max": bst.get_stats().get('max'),
-            "last": bst.get_stats().get('last'),
-            "avg": bst.mean_value,
-            "var": bst.get_stats().get('var'),
-            "size": bst.get_stats().get('size')
+            "min": bst.get_stats(last_n).get('min'),
+            "max": bst.get_stats(last_n).get('max'),
+            "last": bst.get_stats(last_n).get('last'),
+            "avg": bst.get_stats(last_n).get('avg'),
+            "var": bst.get_stats(last_n).get('var'),
+            "size": bst.get_stats(last_n).get('size')
         }
 
     def get_values(self, symbol: str) -> List[float]:
