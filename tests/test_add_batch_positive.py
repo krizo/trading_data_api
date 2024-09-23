@@ -13,13 +13,14 @@ from sender import Sender
 
 test_data = [
     {
-        "symbol": "TST1",
-        "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
-    },
-    {
         "symbol": "TST2",
         "values": list(range(1, 14))
     },
+    {
+        "symbol": "TST1",
+        "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
+    },
+
     {
         "symbol": "TST3",
         "values": [0, 0.0]
@@ -79,8 +80,9 @@ def test_get_stats_positive(data):
     # Check if all metrics are in the response
     assert sorted(StatsResponse.model_fields) == sorted(content.keys())
 
-    assert_equals(content['min'], np.min(data['values']), "/stats/ 'min' value")
-    assert_equals(content['max'], np.max(data['values']), "/stats/ 'max' value")
-    assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value")
-    assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value")
-    assert_equals(content['last'], data['values'][-1], "/stats/ 'last' value")
+    n_last_values = data['values'][-10 ** k_value:]
+    assert_equals(content['min'], np.min(n_last_values), "/stats/ 'min' value")
+    assert_equals(content['max'], np.max(n_last_values), "/stats/ 'max' value")
+    assert_equals(content['avg'], np.mean(n_last_values), "/stats/ 'avg' value")
+    assert_equals(content['var'], np.var(n_last_values), "/stats/ 'var' value")
+    assert_equals(content['last'], n_last_values[-1], "/stats/ 'last' value")
