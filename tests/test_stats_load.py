@@ -35,7 +35,7 @@ class UsersTest(locust.TaskSet):
     user interactions with the API endpoints, such as getting statistics and adding batches.
     """
 
-    @locust.task(10)
+    @locust.task(100)
     def get_stats(self):
         """
         Send GET requests to the /stats endpoint for different values of 'k'.
