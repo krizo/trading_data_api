@@ -1,136 +1,137 @@
-import random
 from typing import Dict, List
 
-from fastapi import HTTPException
-
-from config.consts import MAX_SYMBOLS_COUNT, MAX_TRADE_POINTS_COUNT, MAX_K_VALUE
-from helpers.decorators import log_execution_time
+from config.consts import MAX_K_VALUE
+from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
+from data_structures.bst import BST
 
 
 class Database:
-    """
-    A singleton in-memory database for storing and retrieving trading data for financial instruments.
-
-    This class allows for adding, retrieving, and deleting financial instrument data, as well as performing
-    statistical analysis on recent trading prices for specified symbols.
-    """
-
     _instance = None
 
-    def __new__(cls, *args, **kwargs):
-        if not cls._instance:
+    def __new__(cls):
+        """
+        Ensures that only one instance of the Database class is created (Singleton pattern).
+
+        @returns: The singleton instance of the Database class.
+        """
+        if cls._instance is None:
             cls._instance = super(Database, cls).__new__(cls)
+            cls._instance._initialize()
         return cls._instance
 
-    def __init__(self):
-        if not hasattr(self, 'data'):  # Ensure the data dict is only initialized once
-            self.data: Dict[str, List[float]] = {}
-
-    @staticmethod
-    def __name__():
-        return "Database"
-
-    def add_batch(self, symbol: str, values: List[float]):
+    def _initialize(self):
         """
-        Add a batch of trading prices for a given financial instrument.
-
-        :param symbol: String identifier for the financial instrument.
-        :param values: List of floating-point numbers representing trading prices to be added.
-        :raises HTTPException: If the symbol limit or values count exceeds the maximum allowed.
+        Initialize the in-memory storage for trading symbols.
+        This method is called only once during the lifetime of the singleton instance.
         """
-        if symbol not in self.data:
-            if len(self.data) == MAX_SYMBOLS_COUNT:
-                raise HTTPException(status_code=404, detail=f"Symbols limit reached ({MAX_SYMBOLS_COUNT})")
-            self.data[symbol] = []
+        self.data_store: Dict[str, BST] = {}
+
+    def add_batch(self, symbol: str, values: List[float]) -> str:
+        """
+        Add a batch of trading data for a specific symbol with validation.
+
+        @param symbol: The financial instrument identifier.
+        @param values: A list of trading price values.
+        @returns: Confirmation message for the addition of batch data.
+        @raises ValueError: If any validation fails (e.g., symbol length, invalid values).
+        """
+        # Validate the length of the symbol
+        if len(symbol) > MAX_SYMBOLS_LENGTH:
+            raise ValueError(f"Symbol length must not exceed {MAX_SYMBOLS_LENGTH} characters.")
+
+        # Validate the total number of symbols
+        if len(self.data_store) >= MAX_SYMBOLS_COUNT and symbol not in self.data_store:
+            raise ValueError(f"Symbols limit reached ({MAX_SYMBOLS_COUNT}).")
+
+        # Validate the size of the values list
+        if len(values) == 0:
+            raise ValueError("The list of trading values must contain at least 1 item.")
         if len(values) > MAX_TRADE_POINTS_COUNT:
-            raise HTTPException(status_code=404, detail=f"Values count exceeds the limit ({MAX_TRADE_POINTS_COUNT})")
-        self.data[symbol].extend(values)
+            raise ValueError(f"The list should have at most {MAX_TRADE_POINTS_COUNT} items, not {len(values)}.")
 
-    def get_values(self, symbol: str, num_points: int = 0) -> List[float]:
+        # Validate the values themselves
+        for value in values:
+            if not isinstance(value, (int, float)):
+                raise ValueError("All values must be valid numbers.")
+            if value < 0:
+                raise ValueError("All values must be greater than 0.")
+
+        # If symbol is not in the data store, initialize its BST
+        if symbol not in self.data_store:
+            self.data_store[symbol] = BST()
+
+        bst = self.data_store[symbol]
+        for value in values:
+            bst.insert(value)
+
+        return "Batch added successfully"
+
+    def get_stats(self, symbol: str, k: int) -> Dict[str, float]:
         """
-        Retrieve the most recent `num_points` data points for the specified financial instrument.
+        Get statistical analysis of trading data for a specific symbol.
 
-        :param symbol: Financial instrument identifier.
-        :param num_points: Number of data points to retrieve (default 0 retrieves all available data).
-        :return: List of recent data points.
-        :raises HTTPException: If the symbol is not found or there is no data available.
+        @param symbol: The financial instrument identifier.
+        @param k: The number of last 1e{k} data points to analyze.
+        @returns: A dictionary containing the min, max, last, avg, var, and size values.
+        @raises ValueError: If the symbol is not found in the database.
         """
-        if symbol not in self.data:
-            raise HTTPException(status_code=404, detail="Symbol not found")
+        if k > MAX_K_VALUE:
+            raise ValueError("Symbol not found")
 
-        values = self.data[symbol]
+        if symbol not in self.data_store:
+            raise ValueError("Symbol not found")
 
-        if num_points > 0:
-            values = values[-num_points:]
+        bst = self.data_store[symbol]
 
-        if not values:
-            raise HTTPException(status_code=400, detail="No data points available for analysis")
+        return {
+            "min": bst.get_stats().get('min'),
+            "max": bst.get_stats().get('max'),
+            "last": bst.get_stats().get('last'),
+            "avg": bst.mean_value,
+            "var": bst.get_stats().get('var'),
+            "size": bst.get_stats().get('size')
+        }
 
-        return values
-
-    def delete_symbol(self, symbol: str):
+    def get_values(self, symbol: str) -> List[float]:
         """
-        Delete all trading data for a specified financial instrument.
+        Get all trading values for a specific symbol, sorted in ascending order.
 
-        :param symbol: Financial instrument identifier.
-        :raises HTTPException: If the symbol is not found in the database.
+        @param symbol: The financial instrument identifier.
+        @returns: A sorted list of all trading prices for the given symbol.
+        @raises ValueError: If the symbol is not found in the database.
         """
-        if symbol not in self.data:
-            raise HTTPException(status_code=404, detail="Symbol not found")
-        del self.data[symbol]
+        if symbol not in self.data_store:
+            raise ValueError("Symbol not found")
+
+        bst = self.data_store[symbol]
+        return list(bst.get_all_values())
+
+    def get_symbols(self) -> List[str]:
+        """
+        Get all trading symbols stored in the system.
+
+        @returns: A list of all symbols.
+        """
+        from main import LOG
+        LOG.info(self.data_store.keys())
+        return list(self.data_store.keys())
 
     def clear(self):
         """
-        Clear the entire in-memory database of all data.
+        Clear the entire data store, removing all symbols and their corresponding data.
         """
-        self.data.clear()
+        self.data_store.clear()
 
-    @log_execution_time
-    def calculate_stats(self, symbol: str, k: int) -> Dict[str, float]:
+    def delete_symbol(self, symbol: str) -> str:
         """
-        Perform statistical analysis on the recent trading data for a specified financial instrument.
+        Delete the data for a specific symbol.
 
-        This method computes the minimum, maximum, most recent, average, and variance of the last `10^k` data points.
-
-        :param symbol: Financial instrument identifier.
-        :param k: An integer from 1 to 8 specifying the number of last `10^k` data points to analyze.
-        :return: A dictionary containing the calculated statistical values (min, max, last, avg, var).
-        :raises HTTPException: If the symbol is not found, `k` is out of the valid range, or no data is available.
+        @param symbol: The financial instrument identifier.
+        @returns: Confirmation message for the deletion of the symbol.
+        @raises ValueError: If the symbol is not found in the database.
         """
-        if k < 1 or k > MAX_K_VALUE:
-            raise HTTPException(status_code=400, detail=f"Parameter 'k' must be between 1 and {MAX_K_VALUE}")
-
-        num_points = int(10 ** k)
-        values = self.get_values(symbol, num_points)
-
-        if not values:
-            raise HTTPException(status_code=404, detail="No data found for the given symbol")
-
-        # Initialize variables for calculating stats
-        min_value = float('inf')
-        max_value = float('-inf')
-        sum_value = 0
-        sum_square = 0
-        n = len(values)
-
-        # One-pass calculation for min, max, sum, and sum of squares
-        for value in values:
-            min_value = min(min_value, value)
-            max_value = max(max_value, value)
-            sum_value += value
-            sum_square += value ** 2
-
-        avg_value = sum_value / n
-        variance = (sum_square / n) - (avg_value ** 2)
-
-        # Return the computed stats
-        stats = {
-            "min": min_value,
-            "max": max_value,
-            "last": values[-1],
-            "avg": avg_value,
-            "var": variance,
-            "size": len(values)
-        }
-
-        return stats
+        if symbol in self.data_store:
+            del self.data_store[symbol]
+            return f"Symbol {symbol} deleted successfully"
+        else:
+            raise ValueError(f"Symbol {symbol} not found")

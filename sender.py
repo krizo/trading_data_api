@@ -1,12 +1,13 @@
-import json
-from typing import List, Iterable, Dict, Optional
-import requests
 import logging
+from typing import List, Iterable, Dict, Optional
 
-from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT
+import requests
+
+from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.decorators import log_execution_time
 from helpers.generators import chunk_data
-from main import LOG
+
+LOG = logging.getLogger(__name__)
 
 
 class Sender:
@@ -22,11 +23,11 @@ class Sender:
         """
         Generic method for sending HTTP requests and logging information about them.
 
-        :param method: HTTP method (GET, POST, DELETE).
-        :param endpoint: API endpoint (without base URL).
-        :param data: Payload for POST requests (optional).
-        :param params: Query parameters for GET requests (optional).
-        :return: Response object.
+        @param method: HTTP method (GET, POST, DELETE).
+        @param endpoint: API endpoint (without base URL).
+        @param data: Payload for POST requests (optional).
+        @param params: Query parameters for GET requests (optional).
+        @returns: Response object.
         """
         url = f"{cls.base_url}/{endpoint}"
 
@@ -42,6 +43,10 @@ class Sender:
     def add_batch(cls, symbol: str, values: List[float]) -> requests.Response:
         """
         Send a POST request to add a batch of trading prices for a given financial instrument.
+
+        @param symbol: The financial instrument's identifier.
+        @param values: List of trading prices to be added.
+        @returns: Response object from the server.
         """
         endpoint = "add_batch"
         data = {"symbol": symbol, "values": values}
@@ -51,14 +56,30 @@ class Sender:
     def get_values(cls, symbol: str) -> requests.Response:
         """
         Send a GET request to retrieve trading values for a specific symbol.
+
+        @param symbol: The financial instrument's identifier.
+        @returns: Response object containing trading values.
         """
         endpoint = f"get_values/{symbol}"
+        return cls.send_request('GET', endpoint)
+
+    @classmethod
+    def get_symbols(cls) -> requests.Response:
+        """
+        Send a GET request to retrieve trading symbols.
+
+        @returns: Response object containing a list of trading symbols.
+        """
+        endpoint = f"symbols"
         return cls.send_request('GET', endpoint)
 
     @classmethod
     def delete_symbol(cls, symbol: str) -> requests.Response:
         """
         Send a DELETE request to remove a specific symbol from the database.
+
+        @param symbol: The financial instrument's identifier.
+        @returns: Response object from the server confirming deletion.
         """
         endpoint = f"delete_symbol/{symbol}"
         return cls.send_request('DELETE', endpoint)
@@ -67,8 +88,10 @@ class Sender:
     def clear_db(cls) -> requests.Response:
         """
         Send a DELETE request to clear the entire database.
+
+        @returns: Response object from the server confirming database clearance.
         """
-        endpoint = "clear_db"
+        endpoint = "clear"
         return cls.send_request('DELETE', endpoint)
 
     @classmethod
@@ -77,9 +100,9 @@ class Sender:
         """
         Send a GET request to retrieve statistical analysis of trading data for a specific symbol.
 
-        :param symbol: The financial instrument's identifier.
-        :param k: An integer specifying the number of last 1e{k} data points to analyze.
-        :return: The response from the API, which includes statistics (min, max, last, avg, var).
+        @param symbol: The financial instrument's identifier.
+        @param k: An integer specifying the number of last 1e{k} data points to analyze.
+        @returns: Response from the API, which includes statistics (min, max, last, avg, var).
         """
         endpoint = "stats"
         params = {"symbol": symbol, "k": k}
@@ -91,10 +114,10 @@ class Sender:
         """
         Send trading values to the server in chunks and return the values sent.
 
-        :param symbol: Financial instrument symbol.
-        :param generated_data: Generator or iterable of trading values.
-        :param chunk_size: Maximum size  of each chunk.
-        :return: A list of all values sent to the server.
+        @param symbol: Financial instrument symbol.
+        @param generated_data: Generator or iterable of trading values.
+        @param chunk_size: Maximum size of each chunk.
+        @returns: A list of all values sent to the server.
         """
         values_sent: List[float] = []
 

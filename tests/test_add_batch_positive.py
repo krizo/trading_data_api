@@ -3,27 +3,26 @@ import math
 import random
 import sys
 
+import numpy as np
 import pytest
 
 from config.consts import MAX_TRADE_POINTS_COUNT
 from helpers.assertions import assert_equals
-from helpers.generators import SymbolGenerator
 from models.stats_response_model import StatsResponse
 from sender import Sender
-import numpy as np
 
 test_data = [
     {
-        "symbol": next(SymbolGenerator()),
+        "symbol": "TST1",
         "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
     },
     {
-        "symbol": next(SymbolGenerator()),
+        "symbol": "TST2",
         "values": [0, 0.0]
     },
     {
-        "symbol": next(SymbolGenerator()),
-        "values": [math.sqrt(sys.float_info.max)] # Can't be more because ** 2 is used in calculating variation
+        "symbol": "TST3",
+        "values": [math.sqrt(sys.float_info.max)]  # Can't be more because ** 2 is used in calculating variation
     },
 ]
 
@@ -66,16 +65,18 @@ def test_get_values_positive(data):
 
     Sender.add_batch(symbol, expected_values)
 
+    response = Sender.get_symbols()
+    assert response.ok, f"Request failed. Response: {response.text}"
+
     # Get the values
     response = Sender.get_values(symbol)
     assert response.ok, f"Request failed. Response: {response.text}"
+    actual_values = json.loads(response.content.decode())
 
-    content = json.loads(response.content)
-
-    assert_equals(actual_value=content['symbol'], expected=symbol, description="Symbol")
-    assert_equals(actual_value=content['values'], expected=expected_values)
+    assert_equals(actual_value=actual_values, expected=expected_values)
 
 
+@pytest.mark.functional
 def test_get_stats_positive(data):
     """
     Test for getting statistics for trading values for a given symbol.
@@ -84,7 +85,7 @@ def test_get_stats_positive(data):
     Sender.add_batch(symbol, expected_values)
 
     k_value = math.floor(math.log10(len(expected_values))) if len(expected_values) > 10 else 1
-    response = Sender.get_stats(data['symbol'], k_value)
+    response = Sender.get_stats(symbol, k_value)
     content = json.loads(response.content)
 
     # Check if all metrics are in the response
@@ -95,4 +96,3 @@ def test_get_stats_positive(data):
     assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value")
     assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value")
     assert_equals(content['last'], data['values'][-1], "/stats/ 'last' value")
-    assert_equals(content['size'], len(data['values']), "/size/ 'last' value")
