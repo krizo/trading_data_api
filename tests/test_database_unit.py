@@ -31,7 +31,7 @@ def test_add_batch(db):
 
     # Verify the data was added correctly
     stored_values = db.get_values(symbol)
-    assert stored_values == values  # BST stores values in sorted order
+    assert stored_values == values
 
 
 @pytest.mark.unit
