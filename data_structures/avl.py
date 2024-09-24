@@ -58,8 +58,9 @@ class AVLTree:
         old_mean = self.mean_value
         self.mean_value = self.sum_values / self.count_values
 
-        # Update the sum of squares for variance calculation
-        self.sum_of_squares += (value - old_mean) * (value - self.mean_value)
+        if self.count_values > 1:
+            # Update the sum of squares for variance calculation. Only when needed (more than 2 elements in the tree)
+            self.sum_of_squares += (value - old_mean) * (value - self.mean_value)
 
         # Invalidate cache
         self._stats_cache = None
