@@ -20,7 +20,6 @@ test_data = [
         "symbol": "TST1",
         "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
     },
-
     {
         "symbol": "TST3",
         "values": [0, 0.0]

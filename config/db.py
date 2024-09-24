@@ -63,9 +63,9 @@ class Database:
         if symbol not in self.data_store:
             self.data_store[symbol] = AVLTree()
 
-        bst = self.data_store[symbol]
+        avl = self.data_store[symbol]
         for value in values:
-            bst.insert(value)
+            avl.insert(value)
 
         return "Batch added successfully"
 
@@ -84,15 +84,15 @@ class Database:
         if symbol not in self.data_store:
             raise ValueError("Symbol not found")
 
-        bst = self.data_store[symbol]
+        avl = self.data_store[symbol]
         last_n = 10 ** k
         return {
-            "min": bst.get_stats(last_n).get('min'),
-            "max": bst.get_stats(last_n).get('max'),
-            "last": bst.get_stats(last_n).get('last'),
-            "avg": bst.get_stats(last_n).get('avg'),
-            "var": bst.get_stats(last_n).get('var'),
-            "size": bst.get_stats(last_n).get('size')
+            "min": avl.get_stats(last_n).get('min'),
+            "max": avl.get_stats(last_n).get('max'),
+            "last": avl.get_stats(last_n).get('last'),
+            "avg": avl.get_stats(last_n).get('avg'),
+            "var": avl.get_stats(last_n).get('var'),
+            "size": avl.get_stats(last_n).get('size')
         }
 
     def get_values(self, symbol: str) -> List[float]:
@@ -106,8 +106,8 @@ class Database:
         if symbol not in self.data_store:
             raise ValueError("Symbol not found")
 
-        bst = self.data_store[symbol]
-        return list(bst.get_all_values())
+        avl = self.data_store[symbol]
+        return list(avl.get_all_values())
 
     def get_symbols(self) -> List[str]:
         """
