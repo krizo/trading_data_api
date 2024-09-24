@@ -1,3 +1,4 @@
+from array import array
 from collections import deque
 from typing import List, Dict, Optional
 
@@ -179,7 +180,7 @@ class AVLTree:
         if self._stats_cache is not None and self._cache_last_n == last_n:
             return self._stats_cache
 
-        values = list(self.insertion_order)[-last_n:] if last_n else list(self.insertion_order)
+        values = array('d', self.insertion_order)[-last_n:] if last_n else array('d', self.insertion_order)
 
         min_value = min(values)
         max_value = max(values)
