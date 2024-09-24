@@ -104,6 +104,12 @@ class AVLTree:
         return node
 
     def _left_rotate(self, z: Node) -> Node:
+        """
+        Perform a left rotation on the given node.
+
+        @param z: The root of the subtree to rotate.
+        @returns: The new root after rotation.
+        """
         y = z.right
         T2 = y.left
         y.left = z
@@ -113,6 +119,12 @@ class AVLTree:
         return y
 
     def _right_rotate(self, z: Node) -> Node:
+        """
+        Perform a right rotation on the given node.
+
+        @param z: The root of the subtree to rotate.
+        @returns: The new root after rotation.
+        """
         y = z.left
         T3 = y.right
         y.right = z
@@ -122,11 +134,23 @@ class AVLTree:
         return y
 
     def _get_height(self, node: Optional[Node]) -> int:
+        """
+        Get the height of the node.
+
+        @param node: The node whose height is to be checked.
+        @returns: The height of the node.
+        """
         if not node:
             return 0
         return node.height
 
     def _get_balance(self, node: Optional[Node]) -> int:
+        """
+        Calculate the balance factor of the node.
+
+        @param node: The node whose balance is to be calculated.
+        @returns: The balance factor.
+        """
         if not node:
             return 0
         return self._get_height(node.left) - self._get_height(node.right)
@@ -179,11 +203,22 @@ class AVLTree:
         return stats
 
     def get_all_values(self) -> List[float]:
+        """
+        Get all values stored in the AVL Tree in sorted order.
+
+        @returns: A list of all values in the AVL Tree, sorted in ascending order.
+        """
         values = []
         self._inorder_traversal(self.root, values)
         return values
 
     def _inorder_traversal(self, node: Optional[Node], values: List[float]):
+        """
+        Perform in-order traversal to gather all values from the AVL Tree.
+
+        @param node: The current node in the tree.
+        @param values: List to collect values in sorted order.
+        """
         if node is None:
             return
         self._inorder_traversal(node.left, values)

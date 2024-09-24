@@ -6,6 +6,11 @@ from data_structures.avl import AVLTree
 
 
 class Database:
+    """
+    A singleton in-memory database for storing and retrieving trading data for financial instruments.
+    This class allows for adding, retrieving, and deleting financial instrument data, as well as performing
+    statistical analysis on recent trading prices for specified symbols.
+    """
     _instance = None
 
     def __new__(cls):
@@ -28,12 +33,10 @@ class Database:
 
     def add_batch(self, symbol: str, values: List[float]) -> str:
         """
-        Add a batch of trading data for a specific symbol with validation.
-
-        @param symbol: The financial instrument identifier.
-        @param values: A list of trading price values.
-        @returns: Confirmation message for the addition of batch data.
-        @raises ValueError: If any validation fails (e.g., symbol length, invalid values).
+        Add a batch of trading prices for a given financial instrument.
+        @param symbol: String identifier for the financial instrument.
+        @param values: List of floating-point numbers representing trading prices to be added.
+        @raises HTTPException: If the symbol limit or values count exceeds the maximum allowed.
         """
         # Validate the length of the symbol
         if len(symbol) > MAX_SYMBOLS_LENGTH:
