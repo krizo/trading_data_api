@@ -118,8 +118,8 @@ def test_locust_load_stats():
     # start the test
     runner.start(user_count=100, spawn_rate=10)
 
-    # in 30 minutes stop the runner
-    gevent.spawn_later(300, runner.quit)  # 1800 seconds = 30 minutes
+    # in 5 minutes stop the runner
+    gevent.spawn_later(300, runner.quit)
 
     # wait for the greenlets
     runner.greenlet.join()
