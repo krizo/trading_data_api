@@ -1,6 +1,7 @@
-from array import array
 from collections import deque
 from typing import List, Dict, Optional
+
+import numpy as np
 
 
 class Node:
@@ -180,13 +181,13 @@ class AVLTree:
         if self._stats_cache is not None and self._cache_last_n == last_n:
             return self._stats_cache
 
-        values = array('d', self.insertion_order)[-last_n:] if last_n else array('d', self.insertion_order)
+        values = np.array(list(self.insertion_order)[-last_n:] if last_n else self.insertion_order)
 
-        min_value = min(values)
-        max_value = max(values)
+        min_value = np.min(values)
+        max_value = np.max(values)
         last_value = values[-1]
-        avg_value = sum(values) / len(values)
-        variance = sum((x - avg_value) ** 2 for x in values) / len(values) if len(values) > 1 else 0.0
+        avg_value = np.mean(values)
+        variance = np.var(values) if len(values) > 1 else 0.0
         size = len(values)
 
         stats = {
