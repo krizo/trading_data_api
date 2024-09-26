@@ -2,10 +2,15 @@ from typing import Dict, List
 
 from config.consts import MAX_K_VALUE
 from config.consts import MAX_TRADE_POINTS_COUNT, MAX_SYMBOLS_COUNT, MAX_SYMBOLS_LENGTH
-from data_structures.bst import BST
+from data_structures.avl import AVLTree
 
 
 class Database:
+    """
+    A singleton in-memory database for storing and retrieving trading data for financial instruments.
+    This class allows for adding, retrieving, and deleting financial instrument data, as well as performing
+    statistical analysis on recent trading prices for specified symbols.
+    """
     _instance = None
 
     def __new__(cls):
@@ -24,16 +29,14 @@ class Database:
         Initialize the in-memory storage for trading symbols.
         This method is called only once during the lifetime of the singleton instance.
         """
-        self.data_store: Dict[str, BST] = {}
+        self.data_store: Dict[str, AVLTree] = {}
 
     def add_batch(self, symbol: str, values: List[float]) -> str:
         """
-        Add a batch of trading data for a specific symbol with validation.
-
-        @param symbol: The financial instrument identifier.
-        @param values: A list of trading price values.
-        @returns: Confirmation message for the addition of batch data.
-        @raises ValueError: If any validation fails (e.g., symbol length, invalid values).
+        Add a batch of trading prices for a given financial instrument.
+        @param symbol: String identifier for the financial instrument.
+        @param values: List of floating-point numbers representing trading prices to be added.
+        @raises HTTPException: If the symbol limit or values count exceeds the maximum allowed.
         """
         # Validate the length of the symbol
         if len(symbol) > MAX_SYMBOLS_LENGTH:
@@ -56,13 +59,13 @@ class Database:
             if value < 0:
                 raise ValueError("All values must be greater than 0.")
 
-        # If symbol is not in the data store, initialize its BST
+        # If symbol is not in the data store, initialize its AVL
         if symbol not in self.data_store:
-            self.data_store[symbol] = BST()
+            self.data_store[symbol] = AVLTree()
 
-        bst = self.data_store[symbol]
+        avl = self.data_store[symbol]
         for value in values:
-            bst.insert(value)
+            avl.insert(value)
 
         return "Batch added successfully"
 
@@ -81,15 +84,15 @@ class Database:
         if symbol not in self.data_store:
             raise ValueError("Symbol not found")
 
-        bst = self.data_store[symbol]
-
+        avl = self.data_store[symbol]
+        last_n = 10 ** k
         return {
-            "min": bst.get_stats().get('min'),
-            "max": bst.get_stats().get('max'),
-            "last": bst.get_stats().get('last'),
-            "avg": bst.mean_value,
-            "var": bst.get_stats().get('var'),
-            "size": bst.get_stats().get('size')
+            "min": avl.get_stats(last_n).get('min'),
+            "max": avl.get_stats(last_n).get('max'),
+            "last": avl.get_stats(last_n).get('last'),
+            "avg": avl.get_stats(last_n).get('avg'),
+            "var": avl.get_stats(last_n).get('var'),
+            "size": avl.get_stats(last_n).get('size')
         }
 
     def get_values(self, symbol: str) -> List[float]:
@@ -103,8 +106,8 @@ class Database:
         if symbol not in self.data_store:
             raise ValueError("Symbol not found")
 
-        bst = self.data_store[symbol]
-        return list(bst.get_all_values())
+        avl = self.data_store[symbol]
+        return list(avl.get_all_values())
 
     def get_symbols(self) -> List[str]:
         """

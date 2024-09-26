@@ -35,7 +35,7 @@ class UsersTest(locust.TaskSet):
     user interactions with the API endpoints, such as getting statistics and adding batches.
     """
 
-    @locust.task(10)
+    @locust.task(100)
     def get_stats(self):
         """
         Send GET requests to the /stats endpoint for different values of 'k'.
@@ -118,8 +118,8 @@ def test_locust_load_stats():
     # start the test
     runner.start(user_count=100, spawn_rate=10)
 
-    # in 30 minutes stop the runner
-    gevent.spawn_later(300, runner.quit)  # 1800 seconds = 30 minutes
+    # in 5 minutes stop the runner
+    gevent.spawn_later(300, runner.quit)
 
     # wait for the greenlets
     runner.greenlet.join()

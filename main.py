@@ -1,5 +1,6 @@
-from fastapi import FastAPI, HTTPException
 from typing import List
+
+from fastapi import FastAPI, HTTPException
 
 from config.db import Database
 from config.logging_config import setup_logger
@@ -17,11 +18,8 @@ async def add_batch(request: AddBatchRequest):
     """
     Add a batch of trading data for a specific symbol.
 
-    Args:
-        request (AddBatchRequest): A request body containing the symbol and a list of trading values.
-
-    Returns:
-        dict: A message confirming the batch data addition.
+    @param request: A request body containing the symbol and a list of trading values.
+    @returns: A message confirming the batch data addition.
     """
     try:
         message = db.add_batch(request.symbol, request.values)
@@ -36,12 +34,9 @@ async def get_stats(symbol: str, k: int):
     """
     Get statistical analysis for a specific symbol based on the last 1e{k} data points.
 
-    Args:
-        symbol (str): The financial instrument identifier.
-        k (int): An integer from 1 to 8, representing the number of last data points to analyze.
-
-    Returns:
-        StatsResponse: A response containing min, max, last, avg, and var values.
+    @param symbol: The financial instrument identifier.
+    @param k: An integer from 1 to 8, representing the number of last data points to analyze.
+    @returns: A response containing min, max, last, avg, and var values.
     """
     try:
         stats = db.get_stats(symbol, k)
@@ -56,11 +51,8 @@ async def get_values(symbol: str):
     """
     Retrieve all trading values for a specific symbol, sorted in ascending order.
 
-    Args:
-        symbol (str): The financial instrument identifier.
-
-    Returns:
-        List[float]: A list of sorted trading prices for the given symbol.
+    @param symbol: The financial instrument identifier.
+    @returns: A list of sorted trading prices for the given symbol.
     """
     try:
         values = db.get_values(symbol)
@@ -69,16 +61,13 @@ async def get_values(symbol: str):
         raise HTTPException(status_code=404, detail=str(e))
 
 
+# Endpoint to get all symbols
 @app.get("/symbols/", response_model=List[str])
 async def get_symbols():
     """
-    Retrieve all trading values for a specific symbol, sorted in ascending order.
+    Retrieve all trading symbols stored in the system.
 
-    Args:
-        symbol (str): The financial instrument identifier.
-
-    Returns:
-        List[float]: A list of sorted trading prices for the given symbol.
+    @returns: A list of all symbols.
     """
     try:
         values = db.get_symbols()
@@ -93,8 +82,7 @@ async def clear_database():
     """
     Clear the entire data store, removing all symbols and their corresponding data.
 
-    Returns:
-        dict: A message confirming that the database was cleared.
+    @returns: A message confirming that the database was cleared.
     """
     db.clear()
     return {"message": "Database cleared successfully"}
@@ -106,11 +94,8 @@ async def delete_symbol(symbol: str):
     """
     Delete data for a specific symbol.
 
-    Args:
-        symbol (str): The financial instrument identifier.
-
-    Returns:
-        dict: A message confirming the deletion of the symbol.
+    @param symbol: The financial instrument identifier.
+    @returns: A message confirming the deletion of the symbol.
     """
     try:
         message = db.delete_symbol(symbol)

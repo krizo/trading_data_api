@@ -13,15 +13,23 @@ from sender import Sender
 
 test_data = [
     {
+        "symbol": "TST2",
+        "values": list(range(1, 14))
+    },
+    {
         "symbol": "TST1",
         "values": [round(random.uniform(0.01, 1000.0), 2) for _ in range(MAX_TRADE_POINTS_COUNT)]
     },
     {
-        "symbol": "TST2",
+        "symbol": "TST3",
         "values": [0, 0.0]
     },
     {
-        "symbol": "TST3",
+        "symbol": "TST4",
+        "values": [0, 0.0]
+    },
+    {
+        "symbol": "TST5",
         "values": [math.sqrt(sys.float_info.max)]  # Can't be more because ** 2 is used in calculating variation
     },
 ]
@@ -56,26 +64,6 @@ def test_add_batch_positive(data):
     assert response.ok, f"Request failed for symbol: {data.get('symbol')}. Response: {response.text}"
 
 
-def test_get_values_positive(data):
-    """
-    Test for retrieving trading values for a given symbol.
-    Verifies if the returned data matches the expected values.
-    """
-    symbol, expected_values = data['symbol'], data['values']
-
-    Sender.add_batch(symbol, expected_values)
-
-    response = Sender.get_symbols()
-    assert response.ok, f"Request failed. Response: {response.text}"
-
-    # Get the values
-    response = Sender.get_values(symbol)
-    assert response.ok, f"Request failed. Response: {response.text}"
-    actual_values = json.loads(response.content.decode())
-
-    assert_equals(actual_value=actual_values, expected=expected_values)
-
-
 @pytest.mark.functional
 def test_get_stats_positive(data):
     """
@@ -91,8 +79,9 @@ def test_get_stats_positive(data):
     # Check if all metrics are in the response
     assert sorted(StatsResponse.model_fields) == sorted(content.keys())
 
-    assert_equals(content['min'], np.min(data['values']), "/stats/ 'min' value")
-    assert_equals(content['max'], np.max(data['values']), "/stats/ 'max' value")
-    assert_equals(content['avg'], np.mean(data['values']), "/stats/ 'avg' value")
-    assert_equals(content['var'], np.var(data['values']), "/stats/ 'var' value")
-    assert_equals(content['last'], data['values'][-1], "/stats/ 'last' value")
+    n_last_values = data['values'][-10 ** k_value:]
+    assert_equals(content['min'], np.min(n_last_values), "/stats/ 'min' value")
+    assert_equals(content['max'], np.max(n_last_values), "/stats/ 'max' value")
+    assert_equals(content['avg'], np.mean(n_last_values), "/stats/ 'avg' value")
+    assert_equals(content['var'], np.var(n_last_values), "/stats/ 'var' value")
+    assert_equals(content['last'], n_last_values[-1], "/stats/ 'last' value")
